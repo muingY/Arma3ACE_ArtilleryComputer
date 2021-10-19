@@ -8,9 +8,9 @@ import (
 
 const (
 	firstMenuScene = iota
+	infoScene
 	fcuM109A6Scene
 	fireRecordScene
-	infoScene
 )
 func initializeScene(sceneList *[]interactCore.Scene, len int) {
 	var newScene interactCore.Scene
