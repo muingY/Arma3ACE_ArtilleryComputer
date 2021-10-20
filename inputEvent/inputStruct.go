@@ -24,4 +24,6 @@ const (
 	KEY_Num_7 = 55
 	KEY_Num_8 = 56
 	KEY_Num_9 = 57
+
+	KEY_Backspace = 8
 )
