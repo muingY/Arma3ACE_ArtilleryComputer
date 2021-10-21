@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ArtilleryComputer/artilleryCalculator"
 	InputEvent "ArtilleryComputer/inputEvent"
 	"ArtilleryComputer/interactCore"
 	"os"
@@ -45,16 +46,16 @@ func initializeScene(sceneList *[]interactCore.Scene, len int) {
 	newScene.DisplayBuffer[2] = "DISTANCE   :                "
 	newScene.DisplayBuffer[3] = "MY ALT     :                "
 	newScene.DisplayBuffer[4] = "TARGET ALT :                "
-	newScene.DisplayBuffer[5] = "                            "
-	newScene.DisplayBuffer[6] = "<BACK                  NEXT>"
+	newScene.DisplayBuffer[5] = "                       HIGH>"
+	newScene.DisplayBuffer[6] = "<BACK                   LOW>"
 	newScene.SceneControlFunc = fcuM109A6SceneManage
 	*sceneList = append(*sceneList, newScene)
 
-	// fceResultScene
+	// fcuM109A6ResultScene
 	newScene.DisplayBuffer[0] = "           RESULT           "
 	newScene.DisplayBuffer[1] = "----------------------------"
-	newScene.DisplayBuffer[2] = "MILL LOW   :                "
-	newScene.DisplayBuffer[3] = "MILL HIGH  :                "
+	newScene.DisplayBuffer[2] = "CH | MILL             |  ETA"
+	newScene.DisplayBuffer[3] = "                            "
 	newScene.DisplayBuffer[4] = "                            "
 	newScene.DisplayBuffer[5] = "                            "
 	newScene.DisplayBuffer[6] = "<BACK                       "
@@ -114,6 +115,7 @@ func fcuM109A6SceneManageDisplay(sceneData *interactCore.Scene, mode int) {
 	}
 	interactCore.DisplayScene(sceneData)
 }
+var fileMode int
 func fcuM109A6SceneManage(sceneData *interactCore.Scene) int {
 	inputMode := -1
 	fcuM109A6SceneManageDisplay(sceneData, inputMode)
@@ -132,7 +134,11 @@ func fcuM109A6SceneManage(sceneData *interactCore.Scene) int {
 			fcuM109A6SceneManageDisplay(sceneData, inputMode)
 		case InputEvent.KEY_Button_l5:
 			return firstMenuScene
+		case InputEvent.KEY_Button_r4:
+			fileMode = 1
+			return fcuM109A6ResultScene
 		case InputEvent.KEY_Button_r5:
+			fileMode = 0
 			return fcuM109A6ResultScene
 		}
 		input = InputEvent.GetKeyEvent()
@@ -166,7 +172,19 @@ func fcuM109A6SceneManage(sceneData *interactCore.Scene) int {
 	return -1
 }
 func fcuM109A6ResultSceneManage(sceneData *interactCore.Scene) int {
-	//...
+	var shotDataList []artilleryCalculator.ShotResultData
+
+	shotDataList = artilleryCalculator.M109A6GetShotSolution(fcuDistance, fcuTargetAlt - fcuMyAlt, fileMode)
+
+	interactCore.SetEmptyStrForScene(&sceneData.DisplayBuffer[3])
+	interactCore.SetEmptyStrForScene(&sceneData.DisplayBuffer[4])
+	interactCore.SetEmptyStrForScene(&sceneData.DisplayBuffer[5])
+	for i := 0; i < 3 && i < len(shotDataList); i++ {
+		interactCore.InsertStringForScene(&sceneData.DisplayBuffer[i + 3], strconv.Itoa(shotDataList[i].Charge), 0, 0)
+		interactCore.InsertStringForScene(&sceneData.DisplayBuffer[i + 3], strconv.FormatFloat(shotDataList[i].AimMill, 'f', -1, 64), 0, 5)
+		interactCore.InsertStringForScene(&sceneData.DisplayBuffer[i + 3], strconv.FormatFloat(shotDataList[i].Eta, 'f', -1, 64), 1, 0)
+	}
+	interactCore.DisplayScene(sceneData)
 
 	input := InputEvent.GetKeyEvent()
 
@@ -185,7 +203,7 @@ func main() {
 
 	initializeScene(&sceneList, 5)
 	currentScene = firstMenuScene
-	interactCore.DisplayScene(&sceneList[currentScene])
+	artilleryCalculator.InitializeM109A6RangeTable()
 
 	for {
 		interactCore.DisplayScene(&sceneList[currentScene])
